@@ -1,0 +1,82 @@
+//
+//  ViewController.m
+//  Ch09_JsonParser
+//
+//  Created by 钱梦颖 on 15/4/15.
+//  Copyright (c) 2015年 cassiopeia. All rights reserved.
+//
+
+#import "ViewController.h"
+
+@interface ViewController ()
+
+@end
+
+@implementation ViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view, typically from a nib.
+    NSLog(@"AppHome:%s",[NSHomeDirectory() UTF8String]);
+    
+    NSString * jsonFilePath = [[NSBundle mainBundle]pathForResource:@"personList" ofType:@"json"];
+    
+//    NSData *jsonData = [jsonString dataUsingEncoding:NSUTF8StringEncoding];
+//    NSError *err;
+//    NSDictionary *dic = [NSJSONSerialization JSONObjectWithData:jsonData
+//                                                        options:NSJSONReadingMutableContainers
+//                                                          error:&err];
+//    
+    
+    NSData * jsonData = [[NSData alloc]initWithContentsOfFile:jsonFilePath];
+    NSError * error = nil;
+    id jsonObject = [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableContainers error:&error];
+    if (error) {
+        //出错
+        NSLog(@"Error occured while parsing JSON data :\n%s|n",[[error description]UTF8String]);
+    }else{
+        NSArray * personArray = (NSArray *)jsonObject;
+        NSLog(@"personArray %s",[[personArray description]UTF8String]);
+        
+        //获取对象中的值并打印到控制台
+        for (id person in personArray) {
+            NSString* name = [person objectForKey:@"Name"];
+            NSLog(@"name %@",(__bridge CFStringRef)name);//可打印中文
+            NSNumber * idNumber = [person objectForKey:@"id"];
+            NSLog(@"idNumber %d",[idNumber intValue]);
+            NSArray * hobbyArray = [person objectForKey:@"HobbyList"];
+            for (NSString * hobby in hobbyArray) {
+                NSLog(@"hobby %@",(__bridge CFStringRef)hobby);
+            }
+        }
+    }
+    error = nil;
+    //将JSON对象序列化为数据
+    jsonData = [NSJSONSerialization dataWithJSONObject:jsonObject options:NSJSONWritingPrettyPrinted error:&error];
+    if (error) {
+        //出错
+        NSLog(@"Error occured while parsing JSON object:\n %s",[[error description]UTF8String]);
+    }else{
+        NSArray* paths = NSSearchPathForDirectoriesInDomains(NSDocumentationDirectory, NSUserDomainMask, YES);
+        NSString* documentDirPath = [paths lastObject];
+        NSString* jsonTempFilePath = [documentDirPath stringByAppendingPathComponent:@"tempPersonList.json"];
+        NSLog(@"%s",[jsonTempFilePath UTF8String]);
+        //将json数据保存到文件中
+        if([jsonData writeToFile:jsonTempFilePath atomically:YES])
+        {
+            NSLog(@"JSON file saved successfully.");
+        }else{
+            NSLog(@"Fail to save JSON file.");
+        }
+    }
+    
+    
+    
+}
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+@end
